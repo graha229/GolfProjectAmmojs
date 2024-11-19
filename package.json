@@ -1,0 +1,17 @@
+{
+  "name": "ammojstutorial",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "node": "^22.11.0",
+    "three": "^0.170.0",
+    "vue": "^3.0.4"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "^3.0.4",
+    "vite": "^5.4.10"
+  }
+}
