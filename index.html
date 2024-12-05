@@ -62,7 +62,7 @@
                 overlappingPairCache, 
                 solver, 
                 collisionConfiguration);
-                physicsWorld.setGravity(new Ammo.btVector3(0, -10, 0));
+                physicsWorld.setGravity(new Ammo.btVector3(0, -30, 0));
             }
 
             function initGraphicsWorld () {
@@ -101,7 +101,7 @@
 
                 const controls = new OrbitControls(
                     camera, renderer.domElement);
-                controls.target.set(20, 10, 200);
+                controls.target.set(0, 20, 1000);
                 controls.update();
 
                 renderer.shadowMap.enabled = true;
@@ -165,8 +165,8 @@
             }
 
             function createTargetCubes() {
-                for(var i = -10; i < 20; i+=3) {
-                    for(var j = 0; j < 20; j+=3) {
+                for(var i = -20; i < 20; i+=4) {
+                    for(var j = 0; j < 40; j+=4) {
                         createCube(
                             new THREE.Vector3(4, 4, 4),
                             new THREE.Vector3(i, j, 20),
@@ -186,19 +186,13 @@
             function onMouseDown(event) {
 
                 if(ballInWorld) return;
-
-                mouseCoords.set(
-                    (event.clientX / window.innerWidth) * 2 - 1,
-                    -(event.clientY / window.innerHeight) * 2 + 1
-                );
-                raycaster.setFromCamera(mouseCoords, camera);
                 
                 tmpPos.copy(new THREE.Vector3(0,0,0));
 
                 let pos = new THREE.Vector3(tmpPos.x, tmpPos.y, tmpPos.z);
                 let radius = 1;
                 let quat = new THREE.Vector4(0, 0, 0, 1);
-                let mass = 1;
+                let mass = 2;
 
                 let transform = new Ammo.btTransform();
                 transform.setIdentity();
@@ -216,16 +210,16 @@
                 let body = new Ammo.btRigidBody(rbInfo);
                 // body.setFriction(1);
                 body.setRollingFriction(1);
-                body.setRestitution(0.5);
+                body.setRestitution(1);
                 body.setDamping(0.1, 0);
 
                 physicsWorld.addRigidBody(body);
 
-                let velocity = 50;
+                let velocity = 60; // value ranges from 20 to 100 m/s
 
-                let angle = 45;
+                let angle = 0; // value ranges from -80 to 80 degrees
 
-                body.setLinearVelocity(new Ammo.btVector3(angle*velocity/180 * Math.PI, velocity*Math.sin(20*Math.PI/180), velocity));
+                body.setLinearVelocity(new Ammo.btVector3(velocity*Math.tan(angle*Math.PI/180), velocity*Math.sin(30*Math.PI/180), velocity*Math.cos(30*Math.PI/180)));
                 
                 // body.setAngularVelocity(new Ammo.btVector3(tmpPos.x, tmpPos.y, tmpPos.z));
 
