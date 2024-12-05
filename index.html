@@ -9,6 +9,10 @@
     <!-- <script src=" https://cdn.jsdelivr.net/npm/node-require-function@1.2.0/index.min.js "></script> -->
     <!-- <script src=" https://cdn.jsdelivr.net/npm/node-modules-path@1.0.2/index.min.js "></script> -->
     <!-- <script src=" https://cdn.jsdelivr.net/npm/three-js@79.0.0/three.min.js "></script> -->
+    <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-firestore.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/kripken/ammo.js@HEAD/builds/ammo.wasm.js"></script>
     <!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/jsm/loaders/GLTFLoader.js"> </script> -->
     <link rel="stylesheet" href="style.css">
@@ -17,15 +21,43 @@
     <script type="module">
         import * as THREE from 'three';
         // import { Ammo } from 'https://cdn.jsdelivr.net/gh/kripken/ammo.js@HEAD/builds/ammo.wasm.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        // import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+        apiKey: "AIzaSyC4CjhpVCXgWOB69nGUizsxGHEz_Hb3R7M",
+        authDomain: "realtime-golf-swing-analysis.firebaseapp.com",
+        databaseURL: "https://realtime-golf-swing-analysis-default-rtdb.firebaseio.com",
+        projectId: "realtime-golf-swing-analysis",
+        storageBucket: "realtime-golf-swing-analysis.appspot.com",
+        messagingSenderId: "5778346286",
+        appId: "1:5778346286:web:9750cead5c9d9ed31daabf",
+        measurementId: "G-S01W0FXZXS"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        var swing_data;
+
+        db.ref('swing_data').on('value', (snapshot) => {
+        const snapshot_swing_data = snapshot.val();
+
+        if (snapshot_swing_data) {
+            swing_data = snapshot_swing_data;
+        } else {
+            console.error("No data found at velocity array");
+        }
+        }, (error) => {
+        console.error("The read failed: ", error.code);
+        });
 
             let physicsWorld;
             let rigidBody_List = [];
             let tmpTransformation = undefined;
             let cbContactPairResult;
 
-            const lifespan = 10;
+            const lifespan = 1;
             let lsCounter = 0;
             let ballInWorld = false;
 
@@ -156,7 +188,7 @@
 
             function createGround() {
                 createCube(
-                    new THREE.Vector3(500, 2, 2000),
+                    new THREE.Vector3(500, 2, 500),
                     new THREE.Vector3(15, -5, 30),
                     0,
                     0x567d46,
@@ -165,15 +197,17 @@
             }
 
             function createTargetCubes() {
-                for(var i = -20; i < 20; i+=4) {
+                for(var i = -40; i < 40; i+=4) {
                     for(var j = 0; j < 40; j+=4) {
-                        createCube(
+                        for(var k = 25; k < 30; k += 4) {
+                            createCube(
                             new THREE.Vector3(4, 4, 4),
-                            new THREE.Vector3(i, j, 20),
+                            new THREE.Vector3(i, j, k),
                             0.2,
                             Math.random() * 0xffffff,
                             new THREE.Vector4(0, 0, 0, 1),
                             "target");
+                        }
                     }
                 }
             }
@@ -215,18 +249,32 @@
 
                 physicsWorld.addRigidBody(body);
 
-                let velocity = 60; // value ranges from 20 to 100 m/s
+                let velocity = swing_data.peak_velocity_mph; // value ranges from 20 to 100 m/s
 
-                let angle = 0; // value ranges from -80 to 80 degrees
+                var angle = 0;
+                if(swing_data.swing_path == "Straight") {
+                    angle = 0;
+                }
+                else if (swing_data.swing_path == "Hook") {
+                    angle = 30;
+                }
+                else if(swing_data.swing_path == "Slice") {
+                    angle = -30;
+                }
 
                 body.setLinearVelocity(new Ammo.btVector3(velocity*Math.tan(angle*Math.PI/180), velocity*Math.sin(30*Math.PI/180), velocity*Math.cos(30*Math.PI/180)));
                 
                 // body.setAngularVelocity(new Ammo.btVector3(tmpPos.x, tmpPos.y, tmpPos.z));
 
-                let meshLoader = new GLTFLoader();
+                // let meshLoader = new GLTFLoader();
 
-                meshLoader.load('./golf_ball.glb', (gltf) => {
-                    ball = gltf.scene;
+                // meshLoader.load('./golf_ball.glb', (gltf) => {
+                    // ball = gltf.scene;
+                    let ball = new THREE.Mesh(
+                    new THREE.SphereGeometry(1),
+                    new THREE.MeshPhongMaterial({color: 0xffffff})
+                );
+                ball.name = "ball";
                     scene.add(ball);
                     ball.position.x = pos.x;
                     ball.position.y = pos.y;
@@ -236,7 +284,7 @@
                     body.threeObject = ball;
                     ball.userData.physicsBody = body;
                     rigidBody_List.push(ball);
-                });
+                // });
 
                 ballInWorld = true;
             }
